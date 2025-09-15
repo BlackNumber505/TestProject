@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Anomix Intent - Swap & NFT Marketplace Solver</title>
+<style>
+  body {
+    margin: 0; 
+    font-family: 'Inter', sans-serif;
+    background: #0f1218;
+    color: #e0e5f2;
+    min-height: 100vh;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  header {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #2f3a5f;
+    margin-bottom: 1rem;
+  }
+  .logo-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-grow: 1;
+  }
+  .logo-title h1 {
+    color: #4fc3f7;
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin: 0;
+    user-select: none;
+  }
+  .logo {
+    height: 40px;
+    width: auto;
+    user-select: none;
+  }
+  #wallet-connect {
+    font-weight: 700;
+    font-size: 1rem;
+    background: transparent;
+    border: 2px solid #4fc3f7;
+    color: #4fc3f7;
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  #wallet-connect.connected {
+    background: #4fc3f7;
+    color: #0f1218;
+  }
+  #wallet-connect:hover:not(.connected) {
+    background: #4fc3f7;
+    color: #0f1218;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    max-width: 900px;
+    width: 100%;
+  }
+  .tab-button {
+    padding: 0.8rem 2rem;
+    font-weight: 700;
+    font-size: 1rem;
+    border: 2px solid #4fc3f7;
+    background: transparent;
+    color: #4fc3f7;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    flex-grow: 1;
+    text-align: center;
+  }
+  .tab-button.active, .tab-button:hover {
+    background: #4fc3f7;
+    color: #0f1218;
+  }
+  main {
+    width: 100%;
+    max-width: 900px;
+    background: #1b1f2a;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 0 20px #295274aa;
+    min-height: 380px;
+
+    background-image: url('https://i.imgur.com/3t3gpOL.jpeg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    position: relative;
+  }
+  main::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: #1b1f2acc;
+    border-radius: 12px;
+    pointer-events: none;
+  }
+  main > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  label, select, input, button {
+    display: block;
+    width: 100%;
+  }
+  label {
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    color: #81d4fa;
+  }
+  select, input {
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 1.2rem;
+    border-radius: 6px;
+    border: none;
+    background: #2f3a5f;
+    color: #e0e5f2;
+    font-size: 1rem;
+  }
+  select:hover, input:hover {
+    background: #3e4a7a;
+    cursor: pointer;
+  }
+  select:focus, input:focus {
+    outline: 2px solid #4fc3f7;
+    background: #394f74;
+  }
+  button {
+    font-weight: 700;
+    background: #4fc3f7;
+    color: #0f1218;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.3s ease;
+  }
+  button:disabled {
+    background: #749fc5;
+    cursor: not-allowed;
+  }
+  .result {
+    background: #102033dd;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    min-height: 220px;
+    font-size: 1.15rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    color: #a5c9ed;
+    font-family: Consolas, monospace;
+    overflow-y: auto;
+    max-height: 320px;
+  }
+  .content-section {
+    display: none;
+  }
+  .content-section.active {
+    display: block;
+  }
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,18,24,0.75);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeInBG 0.3s ease forwards;
+  }
+  .modal-container {
+    background: #192233;
+    border-radius: 12px;
+    max-width: 400px;
+    padding: 2rem;
+    box-shadow: 0 0 20px #4fc3f7aa;
+    text-align: center;
+    color: #e0e5f2;
+    animation: slideIn 0.3s ease forwards;
+    font-family: 'Inter', sans-serif;
+  }
+  .modal-header {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  .modal-offer {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    white-space: pre-wrap;
+  }
+  .modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  .btn-accept {
+    background: #4fc3f7;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    color: #0f1218;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 0 8px #4fc3f7aa;
+    transition: background-color 0.3s ease;
+  }
+  .btn-accept:hover { background: #66c8ff; }
+  .btn-decline {
+    background: #2f3a5f;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    color: #e0e5f2;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 0 8px #2f3a5f;
+    transition: background-color 0.3s ease;
+  }
+  .btn-decline:hover { background: #4a557f; }
+
+  @keyframes fadeInBG { from {opacity: 0;} to {opacity: 1;} }
+  @keyframes slideIn { from {opacity: 0; transform: translateY(-30px);} to {opacity: 1; transform: translateY(0);} }
+
+  /* Footer adjusted for single centered profile */
+  footer {
+    background-color: #196d65;
+    color: #f5f7f6;
+    padding: 20px;
+    border-top: 2px solid #144d45;
+    margin-top: 60px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .profile-card {
+    text-align: center;
+    width: auto;
+  }
+  .profile-card img {
+    width: 120px;
+    height: auto;
+    border-radius: 50%;
+    margin-bottom: 8px;
+  }
+  .profile-card .name {
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+  }
+  .social-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+  .social-buttons a button {
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #f5f7f6;
+    font-size: 0.85rem;
+  }
+  .social-buttons a button.discord {
+    background: #7289da;
+  }
+  .social-buttons a button.discord:hover,
+  .social-buttons a button.discord:focus {
+    background: #5a6ea0;
+  }
+  .social-buttons a button img {
+    width: 16px;
+    height: 16px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-title">
+    <img src="https://i.imgur.com/lTGds6z.png" alt="Anoma Logo" class="logo" />
+    <h1>Anomix Intent</h1>
+  </div>
+  <button id="wallet-connect">Connect Wallet</button>
+</header>
+
+<div class="tabs">
+  <button id="tabSwapBtn" class="tab-button active">Token Swap</button>
+  <button id="tabNFTBtn" class="tab-button">NFT Marketplace</button>
+</div>
+
+<main>
+  <section id="swapSection" class="content-section active">
+    <form id="swapForm">
+      <label for="fromToken">From Token:</label>
+      <select id="fromToken" required></select>
+
+      <label for="toToken">To Token:</label>
+      <select id="toToken" required></select>
+
+      <label for="swapAmount">Amount to Swap:</label>
+      <input type="number" id="swapAmount" placeholder="e.g. 1.5" min="0" step="any" required />
+
+      <button type="submit" id="swapSubmit" disabled>Submit Swap Intent</button>
+    </form>
+  </section>
+
+  <section id="nftSection" class="content-section">
+    <form id="nftForm">
+      <label for="nftCollection">NFT Collection:</label>
+      <select id="nftCollection" required></select>
+
+      <label for="paymentToken">Payment Token:</label>
+      <select id="paymentToken" required></select>
+
+      <label for="paymentAmount">Payment Amount:</label>
+      <input type="number" id="paymentAmount" placeholder="e.g. 0.5" min="0" step="any" required />
+
+      <button type="submit" id="nftSubmit" disabled>Submit NFT Intent</button>
+    </form>
+  </section>
+
+  <div class="result" id="resultBox">Your intent details and solver results will appear here...</div>
+</main>
+
+<footer>
+  <div class="profile-card">
+    <img src="https://i.imgur.com/PbAPecN.png" alt="Toha" />
+    <div class="name">Toha</div>
+    <div class="social-buttons">
+      <a href="https://discord.com/users/toha86421" target="_blank" rel="noopener">
+        <button class="discord" type="button">
+          <img src="https://cdn-icons-png.flaticon.com/512/2111/2111370.png" alt="Discord Logo" />
+          toha86421
+        </button>
+      </a>
+    </div>
+  </div>
+</footer>
+
+<div class="modal-bg" id="solverModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc" style="display:none;">
+  <div class="modal-container" role="document">
+    <h2 class="modal-header" id="modalTitle"></h2>
+    <p class="modal-offer" id="modalDesc"></p>
+    <div class="modal-buttons">
+      <button class="btn-accept" id="acceptBtn">Accept</button>
+      <button class="btn-decline" id="declineBtn">Decline</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const popularTokens = [
+  "BTC","ETH","BNB","USDT","USDC","XRP","SOL","ADA","DOGE","MATIC",
+  "DOT","TRX","SHIB","AVAX","LTC","ATOM","LINK","ALGO","XLM","BCH",
+  "FTT","XMR","VET","FIL","ICP","AXS","EGLD","THETA","MKR","NEAR",
+  "AAVE","GRT","KSM","SNX","CRV","LUNA","SUSHI","CAKE","FTM","ZIL",
+  "ONE","DASH","ENJ","COMP","MANA","BAT","RUNE","RVN","HNT","CHZ",
+  "QTUM","WAVES","ZRX","GLM","STX","CRO","KLAY","UST","HOT","NEXO",
+  "KAVA","CELO","XEM","OMG","ICX","ZEN","ANKR","BAL","ZEC","DCR",
+  "1INCH","GALA","BAT","CHSB","SLP","TFUEL","XDC","CVC","NKN","KNC",
+  "LRC","SRM","MIOTA","AR","RSR","OCEAN","CEL","DGB","RENBTC","GLMR"
+];
+
+const topNFTs = [
+  "CryptoPunks","Bored Ape Yacht Club","Mutant Ape Yacht Club","NodeMonkes","Bitcoin Puppets",
+  "Gods Unchained Cards","GigaBuds","Pudgy Penguins","Invisible Friends","Mad Lads",
+  "Stepn","Moonbirds","Silks","Azuki","Cool Cats","Doodles","Meebits","CloneX",
+  "Art Blocks","World of Women","CyberKongz","The Sandbox","Decentraland","Rumble Kong League",
+  "Pixel Vault","Hashmasks","Alien Worlds","Loot","NBA Top Shot","The Sevens","VeeFriends",
+  "Bored Ape Kennel Club","Lazy Lions","CryptoToadz","Parallel","Zed Run","Earth 2",
+  "Degen Ape Academy","Boryoku Dragonz","Bears Deluxe","Pudgy Penguins 2","Alien Frens",
+  "DeadFellaz","Rumble Kong League S2","0N1 Force","Creature World","Anonymice","Forest Knights",
+  "Bored Ape Secret Society","Azuki Garden","World of Women Galaxy","Fancy Bears","Generate",
+  "Lunacats","Lightyears","The Doge Pound","Sappy Seals","Galactic Apes","Cyber Fighters",
+  "The Dynasties","Rarity Tools","CryptoSkulls","Forgotten Runes","Galactic Punks","The Humanoids",
+  "NFT Worlds","The Bagholders","Sailor Moon X","Claynosaur","The Residents"
+];
+
+const solverNames = [
+  "Alex", "Taylor", "Jordan", "Morgan", "Casey", "Drew",
+  "Reese", "Riley", "Kendall", "Sydney", "Quinn", "Jesse",
+  "Blake", "Skyler", "Devon", "Parker", "Cameron", "Logan",
+  "Avery", "Emerson"
+];
+
+const walletBtn = document.getElementById('wallet-connect');
+const resultBox = document.getElementById('resultBox');
+const solverModal = document.getElementById('solverModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalDesc = document.getElementById('modalDesc');
+const acceptBtn = document.getElementById('acceptBtn');
+const declineBtn = document.getElementById('declineBtn');
+
+const tabSwapBtn = document.getElementById('tabSwapBtn');
+const tabNFTBtn = document.getElementById('tabNFTBtn');
+
+const swapSection = document.getElementById('swapSection');
+const nftSection = document.getElementById('nftSection');
+
+const swapForm = document.getElementById('swapForm');
+const nftForm = document.getElementById('nftForm');
+
+const swapSubmit = document.getElementById('swapSubmit');
+const nftSubmit = document.getElementById('nftSubmit');
+
+let walletConnected = false;
+let solverProcessActive = false;
+let currentOffer;
+
+const mockAddress = '0xMockWallet1234';
+
+function createOptions(list) {
+  return list.map(item => `<option value="${item}">${item}</option>`).join('');
+}
+
+function populateDropdowns() {
+  document.getElementById('fromToken').innerHTML = '<option value="" disabled selected>Select token</option>' + createOptions(popularTokens);
+  document.getElementById('toToken').innerHTML = '<option value="" disabled selected>Select token</option>' + createOptions(popularTokens);
+  document.getElementById('paymentToken').innerHTML = '<option value="" disabled selected>Select token</option>' + createOptions(popularTokens);
+  document.getElementById('nftCollection').innerHTML = '<option value="" disabled selected>Select collection</option>' + createOptions(topNFTs);
+}
+
+window.onload = populateDropdowns;
+
+walletBtn.onclick = () => {
+  if (!walletConnected) {
+    walletConnected = true;
+    walletBtn.textContent = `${mockAddress.substring(0, 6)}...${mockAddress.slice(-4)}`;
+    walletBtn.classList.add('connected');
+    checkFormValidations();
+  }
+};
+
+tabSwapBtn.onclick = () => {
+  tabSwapBtn.classList.add('active');
+  tabNFTBtn.classList.remove('active');
+  swapSection.classList.add('active');
+  nftSection.classList.remove('active');
+  checkFormValidations();
+};
+
+tabNFTBtn.onclick = () => {
+  tabNFTBtn.classList.add('active');
+  tabSwapBtn.classList.remove('active');
+  nftSection.classList.add('active');
+  swapSection.classList.remove('active');
+  checkFormValidations();
+};
+
+function checkFormValidations() {
+  swapSubmit.disabled = !swapForm.checkValidity() || !walletConnected;
+  nftSubmit.disabled = !nftForm.checkValidity() || !walletConnected;
+}
+
+swapForm.oninput = checkFormValidations;
+nftForm.oninput = checkFormValidations;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function generateSolverOffer(intentType, userInput) {
+  console.log('generateSolverOffer called with:', intentType, userInput);
+  return new Promise((resolve) => {
+    const solver = solverNames[Math.floor(Math.random() * solverNames.length)];
+    const isMale = ['Alex','Jordan','Casey','Drew','Reese','Kendall','Parker','Cameron','Logan','Avery'].includes(solver);
+    const pronoun = isMale ? 'He' : 'She';
+    const price = (Math.random() * 1000 + 1).toFixed(2);
+    let offer = 'Unknown offer';
+    if (intentType === 'swap') {
+      offer = `${(Math.random() * 10 + 0.1).toFixed(3)} ${userInput.toToken} at $${price} each for swapping from ${userInput.swapAmount} ${userInput.fromToken}`;
+    } else if (intentType === 'buyNFT') {
+      offer = `${pronoun} wants to sell ${pronoun.toLowerCase()} ${userInput.nftCollection} NFT for approx. ${userInput.paymentAmount} ${userInput.paymentToken} at $${price} each from collection ${userInput.nftCollection} NFTs.`;
+    }
+    setTimeout(() => resolve({ solver, offer }), 200);
+  });
+}
+
+async function simulateSolverProcess(intentType, userInput, description) {
+  try {
+    resultBox.textContent = `Your Intent:\n${description}\n\nIntent submission started...\n`;
+    await sleep(1200);
+    resultBox.textContent += `Solver network started searching for offers...\n`;
+    await sleep(2000);
+    resultBox.textContent += `Solver network processing...\n`;
+    await sleep(1500);
+    currentOffer = await generateSolverOffer(intentType, userInput);
+    console.log('Generated offer:', currentOffer);
+    if (!currentOffer || !currentOffer.solver || !currentOffer.offer) {
+      throw new Error('Invalid solver offer generated');
+    }
+    showModal(currentOffer.solver, currentOffer.offer);
+  } catch(err) {
+    console.error('Error in simulateSolverProcess:', err);
+    resultBox.textContent += '\n[Error fetching solver offer. Please try again.]';
+    solverProcessActive = false;
+  }
+}
+
+function showModal(solver, offer) {
+  modalTitle.textContent = `${solver} is interested in your intent`;
+  modalDesc.textContent = `${offer}\n\nWould you accept this offer?`;
+  solverModal.style.display = 'flex';
+}
+
+function hideModal() {
+  solverModal.style.display = 'none';
+}
+
+swapForm.onsubmit = async e => {
+  e.preventDefault();
+  if (!walletConnected) {
+    alert('Please connect your wallet first.');
+    return;
+  }
+  if (solverProcessActive) {
+    alert('Solver is already processing. Please wait.');
+    return;
+  }
+  solverProcessActive = true;
+  const userInput = {
+    fromToken: document.getElementById('fromToken').value,
+    toToken: document.getElementById('toToken').value,
+    swapAmount: parseFloat(document.getElementById('swapAmount').value)
+  };
+  const description = `Swap ${userInput.swapAmount} ${userInput.fromToken} to ${userInput.toToken}`;
+  await simulateSolverProcess('swap', userInput, description);
+};
+
+nftForm.onsubmit = async e => {
+  e.preventDefault();
+  if (!walletConnected) {
+    alert('Please connect your wallet first.');
+    return;
+  }
+  if (solverProcessActive) {
+    alert('Solver is already processing. Please wait.');
+    return;
+  }
+  solverProcessActive = true;
+  const userInput = {
+    nftCollection: document.getElementById('nftCollection').value,
+    paymentToken: document.getElementById('paymentToken').value,
+    paymentAmount: parseFloat(document.getElementById('paymentAmount').value)
+  };
+  const description = `Buy NFT from ${userInput.nftCollection} paying ${userInput.paymentAmount} ${userInput.paymentToken}`;
+  await simulateSolverProcess('buyNFT', userInput, description);
+};
+
+acceptBtn.onclick = () => {
+  const txId = '0x' + Math.floor(Math.random() * 1e16).toString(16).padStart(16, '0');
+  resultBox.textContent += `\nOffer accepted from ${currentOffer.solver}.\nTransaction successful!\n`
+    + `Buyer: You\n`
+    + `Seller: ${currentOffer.solver}\n`
+    + `Offer Details: ${currentOffer.offer}\n`
+    + `Tx ID: ${txId}\n`;
+  solverProcessActive = false;
+  hideModal();
+};
+
+declineBtn.onclick = async () => {
+  resultBox.textContent += `\nOffer declined from ${currentOffer.solver}.\nSolver searching another intent...\n`;
+  hideModal();
+  if (!solverProcessActive) return;
+  await sleep(3000);
+  const intentType = tabSwapBtn.classList.contains('active') ? 'swap' : 'buyNFT';
+  const userInput = intentType === 'swap' ? {
+    fromToken: document.getElementById('fromToken').value,
+    toToken: document.getElementById('toToken').value,
+    swapAmount: parseFloat(document.getElementById('swapAmount').value)
+  } : {
+    nftCollection: document.getElementById('nftCollection').value,
+    paymentToken: document.getElementById('paymentToken').value,
+    paymentAmount: parseFloat(document.getElementById('paymentAmount').value)
+  };
+  currentOffer = await generateSolverOffer(intentType, userInput);
+  showModal(currentOffer.solver, currentOffer.offer);
+};
+</script>
+</body>
+</html>
